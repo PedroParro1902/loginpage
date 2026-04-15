@@ -2,10 +2,10 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>Fight 3.0.0</title>
+<title>Fight 3.1.0</title>
 <style>
 body { margin:0; background:#000; }
-canvas { display:block; margin:auto; background: linear-gradient(#111,#222); }
+canvas { display:block; margin:auto; background:linear-gradient(#111,#222); }
 </style>
 </head>
 <body>
@@ -16,44 +16,39 @@ canvas { display:block; margin:auto; background: linear-gradient(#111,#222); }
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
-const gravity = 0.8;
 let keys = {};
 let gameOver = false;
 let particles = [];
 
-function makePlayer(x, color){
+const gravity = 0.8;
+
+function makePlayer(x,color){
   return {
-    x, y: 320, w: 50, h: 50,
-    dx: 0, dy: 0,
+    x,y:320,w:50,h:50,
+    dx:0,dy:0,
     color,
-    hp: 100,
-    energy: 0,
-    attackCooldown: 0
+    hp:100,
+    energy:0,
+    cd:0
   };
 }
 
-let p1 = makePlayer(100, "blue");
-let p2 = makePlayer(750, "red");
+let p1 = makePlayer(100,"blue");
+let p2 = makePlayer(750,"red");
 
-document.addEventListener("keydown", e=>{
+document.addEventListener("keydown",e=>{
   keys[e.key.toLowerCase()] = true;
 
   if(e.key==="r") reset();
 
   if(!gameOver){
-    // P1
     if(e.key==="j") attack(p1,p2,8);
     if(e.key==="k") attack(p1,p2,12);
     if(e.key==="l") special(p1,p2);
-
-    // P2
-    if(e.key==="1") attack(p2,p1,8);
-    if(e.key==="2") attack(p2,p1,12);
-    if(e.key==="3") special(p2,p1);
   }
 });
 
-document.addEventListener("keyup", e=>{
+document.addEventListener("keyup",e=>{
   keys[e.key.toLowerCase()] = false;
 });
 
@@ -61,26 +56,26 @@ function hit(a,b){
   return a.x < b.x + b.w && a.x + a.w > b.x;
 }
 
-function addParticles(x,y,color){
-  for(let i=0;i<8;i++){
+function particlesFX(x,y,color){
+  for(let i=0;i<6;i++){
     particles.push({
       x,y,
-      vx:(Math.random()-0.5)*6,
-      vy:(Math.random()-0.5)*6,
-      life:20,
+      vx:(Math.random()-0.5)*5,
+      vy:(Math.random()-0.5)*5,
+      life:15,
       color
     });
   }
 }
 
 function attack(a,b,dmg){
-  if(a.attackCooldown>0) return;
-  a.attackCooldown = 15;
+  if(a.cd>0) return;
+  a.cd = 12;
 
   if(hit(a,b)){
     b.hp -= dmg;
-    a.energy += 8;
-    addParticles(b.x,b.y,b.color);
+    a.energy += 10;
+    particlesFX(b.x,b.y,b.color);
   }
 }
 
@@ -90,7 +85,7 @@ function special(a,b){
 
   if(hit(a,b)){
     b.hp -= 30;
-    addParticles(b.x,b.y,"yellow");
+    particlesFX(b.x,b.y,"yellow");
   }
 }
 
@@ -113,15 +108,27 @@ function updatePlayer(p,left,right,jump){
     p.dy=0;
   }
 
-  if(p.attackCooldown>0) p.attackCooldown--;
-
+  if(p.cd>0) p.cd--;
   if(p.energy>100) p.energy=100;
 }
 
-function ai(){
-  if(Math.random()<0.02){
-    if(p2.x>p1.x) p2.dx=-2;
-    else p2.dx=2;
+function enemyAI(){
+  // 🔥 IA REAL FUNCIONANDO
+  let dist = p1.x - p2.x;
+
+  // movimento contínuo
+  if(Math.abs(dist) > 5){
+    p2.x += dist > 0 ? 2.2 : -2.2;
+  }
+
+  // pulo ocasional
+  if(Math.random() < 0.01 && p2.y>=320){
+    p2.dy = -11;
+  }
+
+  // ataque automático
+  if(Math.abs(dist) < 60){
+    attack(p2,p1,6);
   }
 }
 
@@ -131,12 +138,7 @@ function update(){
   updatePlayer(p1,"a","d","w");
   updatePlayer(p2,"ArrowLeft","ArrowRight","ArrowUp");
 
-  ai();
-
-  if(hit(p1,p2) && Math.random()<0.03) p1.hp -= 1;
-  if(hit(p2,p1) && Math.random()<0.03) p2.hp -= 1;
-
-  if(p1.hp<=0 || p2.hp<=0) gameOver=true;
+  enemyAI();
 
   particles.forEach(pt=>{
     pt.x += pt.vx;
@@ -145,49 +147,45 @@ function update(){
   });
 
   particles = particles.filter(p=>p.life>0);
+
+  if(p1.hp<=0 || p2.hp<=0) gameOver=true;
 }
 
 function draw(){
   ctx.clearRect(0,0,900,450);
 
-  // chão
   ctx.fillStyle="#444";
   ctx.fillRect(0,370,900,80);
 
-  // partículas
   particles.forEach(p=>{
     ctx.fillStyle=p.color;
     ctx.fillRect(p.x,p.y,4,4);
   });
 
-  // players
-  ctx.fillStyle=p1.color;
+  ctx.fillStyle="blue";
   ctx.fillRect(p1.x,p1.y,p1.w,p1.h);
 
-  ctx.fillStyle=p2.color;
+  ctx.fillStyle="red";
   ctx.fillRect(p2.x,p2.y,p2.w,p2.h);
 
-  // HUD
+  // HP
   ctx.fillStyle="blue";
   ctx.fillRect(20,20,p1.hp*2,15);
 
   ctx.fillStyle="red";
   ctx.fillRect(580,20,p2.hp*2,15);
 
+  // energia
   ctx.fillStyle="cyan";
   ctx.fillRect(20,40,p1.energy*2,10);
 
-  ctx.fillStyle="cyan";
-  ctx.fillRect(580,40,p2.energy*2,10);
-
   ctx.fillStyle="white";
-  ctx.font="28px Arial";
+  ctx.font="26px Arial";
 
   if(gameOver){
-    let txt = p1.hp>0 ? "Azul venceu!" : "Vermelho venceu!";
-    ctx.fillText(txt, 350,200);
+    ctx.fillText(p1.hp>0?"Azul venceu!":"Vermelho venceu!",320,200);
     ctx.font="18px Arial";
-    ctx.fillText("Pressione R para reiniciar",320,240);
+    ctx.fillText("Pressione R para reiniciar",310,240);
   }
 }
 
