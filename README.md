@@ -1,10 +1,22 @@
-# LuteLivre
+# LuteLivre - Jogo de Luta
 
-## Instruções:
+**LuteLivre** é um jogo de luta simples onde dois jogadores se enfrentam. O objetivo é derrotar o adversário usando socos, chutes e golpes especiais.
 
-- D: Frente;
-- A: Trás;
-- W: Pulo;
-- J: Soco;
-- K: Chute;
-- L: Ataque Especial.
+## Controles
+
+**Jogador 1 (Azul):**
+- **A / D** → Mover
+- **W** → Pular
+- **J** → Soco
+- **K** → Chute
+- **L** → Golpe Especial
+
+**Jogador 2 (Vermelho - IA ou Local):**
+- **← / →** → Mover
+- **↑** → Pular
+- **1** → Soco
+- **2** → Chute
+- **3** → Golpe Especial
+
+## Tecnologias
+- **HTML5**, **JavaScript** e **Canvas**
